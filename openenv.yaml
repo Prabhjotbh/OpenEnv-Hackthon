@@ -1,0 +1,26 @@
+name: procure_env
+version: "1.0.0"
+description: >
+  Industrial B2B procurement negotiation environment. An agent acts as a
+  procurement engineer: querying hidden supplier attributes, negotiating
+  prices, verifying compliance certifications, and avoiding adversarial
+  counterparties to fulfill purchase requirements under budget constraints.
+tasks:
+  - id: task1_easy
+    description: "Price negotiation -- 3 flexible suppliers, no compliance requirements"
+    difficulty: easy
+    max_steps: 12
+  - id: task2_medium
+    description: "Compliance gate -- ATEX certification required, hidden quality issue"
+    difficulty: medium
+    max_steps: 18
+  - id: task3_hard
+    description: "Adversarial market -- deceptive supplier, dual cert requirement, tight budget"
+    difficulty: hard
+    max_steps: 25
+tags:
+  - openenv
+  - procurement
+  - negotiation
+  - b2b
+  - industrial
