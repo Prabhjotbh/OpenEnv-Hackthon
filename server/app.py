@@ -1,24 +1,76 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Body, Query
 from fastapi.responses import HTMLResponse
-from typing import Optional
+from pydantic import TypeAdapter
+from typing import Optional, Any
 import json
 import os
 
 import uvicorn
 
 from server.environment import ProcureEnvironment
-from models import ProcureObservation
+from models import (
+    ProcureObservation, ProcureState,
+    QueryAction, RequestDocAction, OfferAction, AcceptAction, RejectAction,
+    ProcureAction,
+)
 
 app = FastAPI(
     title="ProcureEnv",
-    description="Industrial B2B Procurement RL Environment"
+    description="Industrial B2B Procurement RL Environment",
+    version="1.0.0",
 )
 
+
+# ------------------------------------------------------------------ #
+#  OpenEnv required endpoints                                          #
+# ------------------------------------------------------------------ #
 
 @app.get("/health")
 def health():
     return {"status": "healthy"}
 
+
+@app.get("/metadata")
+def metadata():
+    """Return environment name and description for OpenEnv validator."""
+    return {
+        "name": "procure_env",
+        "description": (
+            "Industrial B2B procurement negotiation environment. "
+            "An agent acts as a procurement engineer: querying hidden supplier attributes, "
+            "negotiating prices, verifying compliance certifications, and avoiding adversarial "
+            "counterparties to fulfill purchase requirements under budget constraints."
+        ),
+    }
+
+
+@app.get("/schema")
+def schema():
+    """Return JSON schemas for action, observation, and state types."""
+    action_schema = TypeAdapter(ProcureAction).json_schema()
+    return {
+        "action":      action_schema,
+        "observation": ProcureObservation.model_json_schema(),
+        "state":       ProcureState.model_json_schema(),
+    }
+
+
+@app.post("/mcp")
+def mcp(request: dict = Body(default={})):
+    """
+    Minimal JSON-RPC 2.0 endpoint for MCP tool discovery.
+    Returns an empty tools list -- procurement actions are exposed via /step.
+    """
+    return {
+        "jsonrpc": "2.0",
+        "id": request.get("id"),
+        "result": {"tools": []},
+    }
+
+
+# ------------------------------------------------------------------ #
+#  Simulation endpoints                                                #
+# ------------------------------------------------------------------ #
 
 @app.post("/reset")
 async def reset(
@@ -33,7 +85,7 @@ async def reset(
 
 @app.post("/step")
 def step(action: dict = Body(default={}), task_id: str = "task1_easy"):
-    """Stateless HTTP step -- resets env each time. Use /ws for stateful sessions."""
+    """Stateless HTTP step -- resets env each call. Use /ws for stateful sessions."""
     if "action" in action and isinstance(action.get("action"), dict):
         payload = action["action"]
         task_id = action.get("task_id", task_id)
@@ -51,6 +103,10 @@ def state(task_id: str = "task1_easy"):
     env.reset()
     return env.state.model_dump()
 
+
+# ------------------------------------------------------------------ #
+#  Status page                                                         #
+# ------------------------------------------------------------------ #
 
 @app.get("/web", response_class=HTMLResponse)
 def web_ui():
@@ -77,7 +133,7 @@ counterparties to fulfill purchase requirements under budget constraints.</p>
 <h2>Tasks</h2>
 <table>
 <tr><th>Task</th><th>Difficulty</th><th>Max Steps</th><th>Key Challenge</th></tr>
-<tr><td>task1_easy</td><td><span class="badge">Easy</span></td><td>12</td><td>Conveyor belts, ₹69L budget, 3 suppliers, pure negotiation</td></tr>
+<tr><td>task1_easy</td><td><span class="badge">Easy</span></td><td>12</td><td>Conveyor belts, &#8377;69L budget, 3 suppliers, pure negotiation</td></tr>
 <tr><td>task2_medium</td><td><span class="badge">Medium</span></td><td>18</td><td>Pressure valves, ATEX required, QuickSeal has quality issues</td></tr>
 <tr><td>task3_hard</td><td><span class="badge">Hard</span></td><td>25</td><td>Hydraulic pumps, CE+ISO9001, FluidDyn deceptive, tight budget</td></tr>
 </table>
@@ -86,17 +142,24 @@ counterparties to fulfill purchase requirements under budget constraints.</p>
 <table>
 <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
 <tr><td>/ws</td><td>WebSocket</td><td>Persistent stateful session (recommended)</td></tr>
-<tr><td>/reset</td><td>POST</td><td>Reset environment</td></tr>
+<tr><td>/reset</td><td>POST</td><td>Reset environment, returns initial observation</td></tr>
 <tr><td>/step</td><td>POST</td><td>Execute action (stateless)</td></tr>
-<tr><td>/state</td><td>GET</td><td>Environment state</td></tr>
+<tr><td>/state</td><td>GET</td><td>Current environment state</td></tr>
 <tr><td>/health</td><td>GET</td><td>Health check</td></tr>
+<tr><td>/metadata</td><td>GET</td><td>Environment name and description</td></tr>
+<tr><td>/schema</td><td>GET</td><td>Action / observation / state JSON schemas</td></tr>
+<tr><td>/mcp</td><td>POST</td><td>MCP tool discovery (JSON-RPC 2.0)</td></tr>
 <tr><td>/docs</td><td>GET</td><td>OpenAPI documentation</td></tr>
 </table>
 
-<p><a href="/docs">View API docs</a> | <a href="/health">Health check</a></p>
+<p><a href="/docs">API docs</a> &bull; <a href="/health">Health</a> &bull; <a href="/metadata">Metadata</a> &bull; <a href="/schema">Schema</a></p>
 </body>
 </html>"""
 
+
+# ------------------------------------------------------------------ #
+#  WebSocket (stateful sessions)                                       #
+# ------------------------------------------------------------------ #
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -107,7 +170,7 @@ async def websocket_endpoint(websocket: WebSocket):
     Server responds with observation JSON each time.
     """
     await websocket.accept()
-    env: ProcureEnvironment | None = None
+    env: Optional[ProcureEnvironment] = None
 
     try:
         while True:
