@@ -20,7 +20,7 @@ client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 TASKS     = ["task1_easy", "task2_medium", "task3_hard"]
 MAX_STEPS = 30  # safety cap -- env enforces its own per-task limits
 
-SYSTEM_PROMPT = """You are a procurement engineer evaluating industrial suppliers in India.
+SYSTEM_PROMPT = """You are a procurement engineer closing a purchase order for industrial equipment in India.
 All prices are in Indian Rupees (INR, ₹).
 
 AVAILABLE ACTIONS -- output exactly one valid JSON object per turn, nothing else:
@@ -30,15 +30,30 @@ AVAILABLE ACTIONS -- output exactly one valid JSON object per turn, nothing else
 {"action": "accept",      "supplier_id": <int>}
 {"action": "reject",      "supplier_id": <int>}
 
-DECISION RULES (follow in priority order):
-1. When required_certs is non-empty: request_doc(certifications) for every serious candidate
-   BEFORE accepting. A missing cert zeroes out 30% of your score.
-2. Always request_doc(quality_report) before accepting. Quality below 0.60 = reject.
-3. Check reliability before committing. Reliability below 0.80 is a deception risk signal.
-4. Negotiate: make offers 15-25% below quoted_price. Flexible suppliers accept; firm ones counter.
-5. Budget constraint: (negotiated_price * quantity) must be <= rfq.budget.
-6. Reject suppliers with missing required certs or quality < 0.60 early to conserve steps.
-7. Focus on 2-3 promising suppliers. Do not check every supplier exhaustively.
+STRATEGY -- follow this decision process in order:
+
+PHASE 1 -- Screen (steps 1-4):
+  Pick the 2 cheapest suppliers by quoted_price.
+  For each: query(reliability). If reliability < 0.80, deprioritise them (deception risk).
+  If required_certs is non-empty: request_doc(certifications) for those 2 suppliers immediately.
+  Reject any supplier with missing required certs. They cannot score on compliance (30% of score).
+
+PHASE 2 -- Validate (steps 5-7):
+  For your top candidate (cheapest cert-compliant supplier):
+  request_doc(quality_report). If quality < 0.60, reject and move to the next.
+  query(lead_time) to confirm they meet the deadline.
+
+PHASE 3 -- Negotiate and close (steps 8+):
+  Make an offer at 20-25% below their quoted_price. Example: quoted=₹1,20,000 → offer ₹90,000.
+  Flexible suppliers will accept or come close. Firm suppliers will counter once.
+  Accept when: (final_price * quantity) <= rfq.budget AND certs verified AND quality >= 0.60.
+  Do not waste steps negotiating with suppliers you will reject anyway.
+
+HARD RULES:
+- Never accept without checking certifications when required_certs is non-empty.
+- Never accept without checking quality_report. Skipping it zeroes 20% of your score.
+- Never accept a supplier with reliability < 0.75 without checking financial_stability.
+- (negotiated_price * quantity) must be <= rfq.budget or you score 0 on cost efficiency.
 
 OUTPUT: one JSON action object only. No markdown, no explanation, no extra text."""
 

@@ -133,8 +133,9 @@ Tested with `meta-llama/Llama-3.1-8B-Instruct` via HuggingFace Inference API:
 | task3_hard | 0.581 | 11 | Caught by FluidDyn deception, skipped CE cert |
 
 The 0.581 on task3 is a meaningful result, not a failure. The deception trap is designed to
-catch models that don't verify supplier reliability and certifications before the accept call.
-An agent that explicitly checks reliability and cert status before accepting clears ~0.78.
+catch models that don't verify reliability and certifications before accepting. An agent using
+the Phase 1→2→3 strategy (screen by cert → validate quality → negotiate → close) avoids the
+trap and scores ~0.85+ by checking FluidDyn's reliability score and missing CE cert early.
 
 ---
 
