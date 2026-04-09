@@ -349,7 +349,7 @@ class ProcureEnvironment:
         else:
             total = cost_score + cert_score + quality_score + diligence_score
 
-        return round(min(1.0, max(0.0, total)), 3)
+        return round(min(0.999, max(0.001, total)), 3)
 
     # ------------------------------------------------------------------ #
     #  Helpers                                                             #

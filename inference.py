@@ -171,7 +171,7 @@ async def run_task(task_id: str) -> dict:
                 if done:
                     break
 
-            final_score = min(max(float(obs.get("cumulative_reward", 0.0)), 0.0), 1.0)
+            final_score = min(max(float(obs.get("cumulative_reward", 0.0)), 0.001), 0.999)
             success = final_score >= 0.4
 
     except Exception as e:
