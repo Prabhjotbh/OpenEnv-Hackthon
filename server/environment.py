@@ -47,7 +47,7 @@ class ProcureEnvironment:
         msg = (
             f"New procurement task loaded: {self._task['rfq']['item']}. "
             f"Quantity: {self._task['rfq']['quantity']} units. "
-            f"Budget: ${self._task['rfq']['budget']:,.0f}. "
+            f"Budget: ₹{self._task['rfq']['budget']:,.0f}. "
             f"Deadline: {self._task['rfq']['deadline_days']} days. "
             f"Required certifications: {self._task['rfq']['required_certs'] or 'None'}. "
             f"{len(self._suppliers)} suppliers available. "
@@ -187,8 +187,8 @@ class ProcureEnvironment:
 
         if offered_price >= current_price:
             return -0.01, (
-                f"Supplier {supplier['name']} noted your offer of ${offered_price}/unit "
-                f"but their current price is already ${current_price}/unit. "
+                f"Supplier {supplier['name']} noted your offer of ₹{offered_price}/unit "
+                f"but their current price is already ₹{current_price}/unit. "
                 f"Offer at or below current price to negotiate."
             )
 
@@ -196,7 +196,7 @@ class ProcureEnvironment:
             self._best_offers[str(sid)] = offered_price
             self._deceptive_trap_triggered[sid] = True
             return 0.04, (
-                f"Supplier {supplier['name']} accepted your offer of ${offered_price}/unit. "
+                f"Supplier {supplier['name']} accepted your offer of ₹{offered_price}/unit. "
                 f"Confirm with accept action to finalize."
             )
 
@@ -205,8 +205,8 @@ class ProcureEnvironment:
             improvement = (current_price - min_price) / supplier["quoted_price"]
             reward = improvement * 0.3
             return reward, (
-                f"Supplier {supplier['name']} cannot go below ${min_price}/unit. "
-                f"They have countered at ${min_price}/unit."
+                f"Supplier {supplier['name']} cannot go below ₹{min_price}/unit. "
+                f"They have countered at ₹{min_price}/unit."
             )
 
         if behavior == "flexible":
@@ -214,7 +214,7 @@ class ProcureEnvironment:
             improvement = (current_price - offered_price) / supplier["quoted_price"]
             reward = improvement * 0.5
             return reward, (
-                f"Supplier {supplier['name']} accepted your offer of ${offered_price}/unit. "
+                f"Supplier {supplier['name']} accepted your offer of ₹{offered_price}/unit. "
                 f"Price locked in. Confirm with accept action."
             )
 
@@ -224,7 +224,7 @@ class ProcureEnvironment:
             improvement = (current_price - counter) / supplier["quoted_price"]
             reward = improvement * 0.3
             return reward, (
-                f"Supplier {supplier['name']} countered at ${counter}/unit "
+                f"Supplier {supplier['name']} countered at ₹{counter}/unit "
                 f"(their best offer)."
             )
 
@@ -247,7 +247,7 @@ class ProcureEnvironment:
             self._cumulative_reward += final_score
             return final_score, (
                 f"DECEPTION: Supplier {supplier['name']} has revised their price to "
-                f"${revised_price}/unit (+20%) upon finalization. "
+                f"₹{revised_price}/unit (+20%) upon finalization. "
                 f"You have been locked in. Final score: {final_score:.2f}. "
                 f"Hint: Always verify supplier reliability and certifications before accepting."
             )
@@ -266,8 +266,8 @@ class ProcureEnvironment:
             cert_msg = f" WARNING: Missing required certs {missing_certs} -- compliance penalty applied."
 
         return final_score, (
-            f"Accepted Supplier {supplier['name']} at ${price}/unit. "
-            f"Total cost: ${total_cost:,.0f} (budget: ${self._task['rfq']['budget']:,.0f}).{cert_msg} "
+            f"Accepted Supplier {supplier['name']} at ₹{price}/unit. "
+            f"Total cost: ₹{total_cost:,.0f} (budget: ₹{self._task['rfq']['budget']:,.0f}).{cert_msg} "
             f"Final score: {final_score:.2f}."
         )
 

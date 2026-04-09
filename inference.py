@@ -34,7 +34,7 @@ CRITICAL RULES (follow in order):
 2. ALWAYS request_doc(doc_type="quality_report") for a supplier before accepting. Quality below 0.60 means reject them.
 3. Check reliability for suppliers before committing. Reliability below 0.80 is a red flag for deception.
 4. Negotiate aggressively: make offers 15-25% below quoted_price. Flexible suppliers will accept; firm ones will counter.
-5. Stay within budget: total cost = price * quantity must be <= rfq.budget.
+5. Stay within budget: total cost = price * quantity must be <= rfq.budget (prices are in INR ₹).
 6. Reject suppliers missing required certifications or with poor quality early to save steps.
 7. Focus on the 2-3 most promising suppliers. Do not waste steps checking all of them.
 
