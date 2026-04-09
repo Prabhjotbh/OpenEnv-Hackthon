@@ -77,9 +77,9 @@ counterparties to fulfill purchase requirements under budget constraints.</p>
 <h2>Tasks</h2>
 <table>
 <tr><th>Task</th><th>Difficulty</th><th>Max Steps</th><th>Key Challenge</th></tr>
-<tr><td>task1_easy</td><td><span class="badge">Easy</span></td><td>12</td><td>Price negotiation with 3 suppliers</td></tr>
-<tr><td>task2_medium</td><td><span class="badge">Medium</span></td><td>18</td><td>ATEX cert required, hidden quality issue</td></tr>
-<tr><td>task3_hard</td><td><span class="badge">Hard</span></td><td>25</td><td>Deceptive supplier, dual cert, tight budget</td></tr>
+<tr><td>task1_easy</td><td><span class="badge">Easy</span></td><td>12</td><td>Conveyor belts, ₹69L budget, 3 suppliers, pure negotiation</td></tr>
+<tr><td>task2_medium</td><td><span class="badge">Medium</span></td><td>18</td><td>Pressure valves, ATEX required, QuickSeal has quality issues</td></tr>
+<tr><td>task3_hard</td><td><span class="badge">Hard</span></td><td>25</td><td>Hydraulic pumps, CE+ISO9001, FluidDyn deceptive, tight budget</td></tr>
 </table>
 
 <h2>Endpoints</h2>
